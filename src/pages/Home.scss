@@ -1,0 +1,73 @@
+.home-container {
+    max-width: 600px;
+    margin: 50px auto;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  h1 {
+    color: #333;
+    font-size: 2.5em;
+  }
+  
+  p {
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  .upload-section {
+    margin: 20px 0;
+  }
+  
+  .file-input {
+    display: block;
+    margin: 0 auto 10px;
+  }
+  
+  .preview {
+    max-width: 300px;
+    border-radius: 10px;
+    margin-top: 10px;
+  }
+  
+  .rizz-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s;
+  }
+  
+  .rizz-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .rizz-button:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+  
+  .result {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+  }
+  
+  .result h3 {
+    margin: 0 0 10px;
+    color: #333;
+  }
+  
+  .result p {
+    color: #222;
+    font-style: italic;
+  }
+  
+  .error {
+    color: #dc3545;
+    margin-top: 10px;
+  }
