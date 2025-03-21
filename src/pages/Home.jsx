@@ -46,7 +46,7 @@ const Home = () => {
     const apiKey = localStorage.getItem('deepseekApiKey');
 
     try {
-      const res = await fetch('https://rizzing-backend.onrender.com/rizzing', {
+      const res = await fetch('https://rizzing-backend-production.up.railway.app/rizzing', {
         method: 'POST',
         body: formData,
         headers: apiKey ? { 'X-API-Key': apiKey } : {},
@@ -84,7 +84,7 @@ const Home = () => {
     const apiKey = localStorage.getItem('deepseekApiKey');
 
     try {
-      const res = await fetch('https://rizzing-backend.onrender.com/reply', {
+      const res = await fetch('https://rizzing-backend-production.up.railway.app/reply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
