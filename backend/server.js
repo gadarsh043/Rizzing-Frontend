@@ -53,7 +53,7 @@ app.post('/rizzing', upload.single('image'), async (req, res) => {
 
     // OCR the processed image
     const { data: { text } } = await Tesseract.recognize(croppedImagePath, 'eng');
-    console.log('OCR Text:', text);
+    // console.log('OCR Text:', text);
 
     const prompt = `Craft a casual, flirty opening line for this dating profile: "${text}". Return only the pickup line, no additional text or explanations.`;
     const response = await openai.chat.completions.create({
