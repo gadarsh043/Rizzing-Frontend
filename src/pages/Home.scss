@@ -272,3 +272,97 @@
   90% { opacity: 0.9; }
   100% { opacity: 0; }
 }
+.password-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  .dialog-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    text-align: center;
+
+    h2 {
+      color: #333;
+      font-size: 1.8em;
+      margin-bottom: 20px;
+    }
+
+    .password-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+      outline: none;
+      transition: border 0.3s;
+
+      &:focus {
+        border-color: #007bff;
+      }
+    }
+
+    .submit-button {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1em;
+      transition: background 0.3s;
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+
+    .switch-option {
+      color: #007bff;
+      cursor: pointer;
+      margin-top: 15px;
+      font-size: 0.9em;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .api-help {
+      margin-top: 20px;
+      text-align: left;
+
+      h3 {
+        color: #333;
+        font-size: 1.2em;
+        margin-bottom: 10px;
+      }
+
+      ol {
+        padding-left: 20px;
+        color: #666;
+        font-size: 0.9em;
+
+        a {
+          color: #007bff;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+}

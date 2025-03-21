@@ -10,6 +10,25 @@ const Home = () => {
   const [error, setError] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [toast, setToast] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(true);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [customApiKey, setCustomApiKey] = useState('');
+  const [useCustomApi, setUseCustomApi] = useState(false);
+
+  const correctPassword = 'Z@ak2024!';
+  const defaultApiKey = 'your-deepseek-api-key-here'; // Replace with your actual key
+
+  const handlePasswordSubmit = () => {
+    if (useCustomApi && customApiKey.trim()) {
+      localStorage.setItem('deepseekApiKey', customApiKey);
+      setShowPasswordDialog(false);
+    } else if (passwordInput === correctPassword) {
+      localStorage.setItem('deepseekApiKey', defaultApiKey);
+      setShowPasswordDialog(false);
+    } else {
+      setError('Wrong password, bro!');
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -29,6 +48,7 @@ const Home = () => {
       const res = await fetch('http://localhost:3000/rizzing', {
         method: 'POST',
         body: formData,
+        headers: { 'X-API-Key': localStorage.getItem('deepseekApiKey') },
       });
       const data = await res.json();
       if (data.line) {
@@ -63,7 +83,10 @@ const Home = () => {
     try {
       const res = await fetch('http://localhost:3000/reply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': localStorage.getItem('deepseekApiKey'),
+        },
         body: JSON.stringify({ text: conversationInput }),
       });
       const data = await res.json();
@@ -92,7 +115,57 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      {!screenshot ? (
+      {showPasswordDialog ? (
+        <div className="password-dialog">
+          <div className="dialog-content">
+            <h2>My room wifi password is?</h2>
+            {!useCustomApi ? (
+              <>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Enter password"
+                  className="password-input"
+                />
+                <button onClick={handlePasswordSubmit} className="submit-button">
+                  Submit
+                </button>
+                <p className="switch-option" onClick={() => setUseCustomApi(true)}>
+                  Use your own API key instead
+                </p>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="Enter your DeepSeek API key"
+                  className="password-input"
+                />
+                <button onClick={handlePasswordSubmit} className="submit-button">
+                  Submit
+                </button>
+                <p className="switch-option" onClick={() => setUseCustomApi(false)}>
+                  Use default API key instead
+                </p>
+                <div className="api-help">
+                  <h3>How to Get Your DeepSeek API Key</h3>
+                  <ol>
+                    <li>Go to <a href="https://platform.deepseek.com/usage" target="_blank" rel="noopener noreferrer">deepseek.com</a>.</li>
+                    <li>Sign up or log in with your account.</li>
+                    <li>Navigate to the API section in your dashboard.</li>
+                    <li>Generate and copy your API key.</li>
+                    <li>Paste it here and submit!</li>
+                  </ol>
+                </div>
+              </>
+            )}
+            {error && <p className="error">{error}</p>}
+          </div>
+        </div>
+      ) : !screenshot ? (
         <div className="upload-screen">
           <h1>Rizz Up Your Game</h1>
           <p>Drop a Hinge/Bumble screenshot to start the chat.</p>
