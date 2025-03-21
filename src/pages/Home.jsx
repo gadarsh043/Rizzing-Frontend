@@ -16,14 +16,14 @@ const Home = () => {
   const [useCustomApi, setUseCustomApi] = useState(false);
 
   const correctPassword = 'Z@ak2024!';
-  const defaultApiKey = 'your-deepseek-api-key-here'; // Replace with your actual key
 
   const handlePasswordSubmit = () => {
     if (useCustomApi && customApiKey.trim()) {
       localStorage.setItem('deepseekApiKey', customApiKey);
       setShowPasswordDialog(false);
     } else if (passwordInput === correctPassword) {
-      localStorage.setItem('deepseekApiKey', defaultApiKey);
+      localStorage.removeItem('deepseekApiKey');
+      console.log('Using default API key from backend');
       setShowPasswordDialog(false);
     } else {
       setError('Wrong password, bro!');
@@ -43,12 +43,13 @@ const Home = () => {
     setLoading(true);
     const formData = new FormData();
     formData.append('image', file);
+    const apiKey = localStorage.getItem('deepseekApiKey');
 
     try {
-      const res = await fetch('http://localhost:3000/rizzing', {
+      const res = await fetch('https://rizzing-backend.onrender.com/rizzing', {
         method: 'POST',
         body: formData,
-        headers: { 'X-API-Key': localStorage.getItem('deepseekApiKey') },
+        headers: apiKey ? { 'X-API-Key': apiKey } : {},
       });
       const data = await res.json();
       if (data.line) {
@@ -80,12 +81,14 @@ const Home = () => {
     }
 
     setLoading(true);
+    const apiKey = localStorage.getItem('deepseekApiKey');
+
     try {
-      const res = await fetch('http://localhost:3000/reply', {
+      const res = await fetch('https://rizzing-backend.onrender.com/reply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': localStorage.getItem('deepseekApiKey'),
+          ...(apiKey ? { 'X-API-Key': apiKey } : {}),
         },
         body: JSON.stringify({ text: conversationInput }),
       });
