@@ -10,7 +10,7 @@ const Home = () => {
   const [error, setError] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [toast, setToast] = useState(false);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(true);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [customApiKey, setCustomApiKey] = useState('');
   const [useCustomApi, setUseCustomApi] = useState(false);
