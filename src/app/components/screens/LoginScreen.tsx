@@ -178,8 +178,8 @@ export const LoginScreen: React.FC = () => {
               ))}
             </div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-              <span style={{ color: "#a78bfa", fontWeight: 600 }}>12,847 </span>
-              people rizzing up their dating game today
+              <span style={{ color: "#a78bfa", fontWeight: 600 }}>Many </span>
+              people are rizzing up their dating game today
             </p>
           </motion.div>
 
