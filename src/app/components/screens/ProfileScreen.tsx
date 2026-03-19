@@ -15,6 +15,8 @@ import {
   Tag,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { auth, db } from "../../../lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 const interestOptions = [
   "Hiking",
@@ -459,6 +461,19 @@ export const ProfileScreen: React.FC = () => {
       {/* Save Button */}
       <motion.button
         whileTap={{ scale: 0.97 }}
+        onClick={async () => {
+          if (auth.currentUser) {
+            try {
+              await setDoc(doc(db, "users", auth.currentUser.uid), {
+                profile: profileData
+              }, { merge: true });
+              alert("Profile saved successfully!");
+            } catch (error) {
+              console.error("Error saving profile:", error);
+              alert("Failed to save profile.");
+            }
+          }
+        }}
         className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 mt-auto transition-all"
         style={{
           background: "linear-gradient(135deg, #7c3aed 0%, #db2777 100%)",
