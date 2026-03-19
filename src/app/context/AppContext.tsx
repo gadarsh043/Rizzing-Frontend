@@ -53,6 +53,8 @@ interface AppContextType {
   setUploadedImages: (imgs: { id: string; url: string; name: string; file?: File }[]) => void;
   generatedRizz: string;
   setGeneratedRizz: (r: string) => void;
+  ocrText: string;
+  setOcrText: (t: string) => void;
   selectedTone: string;
   setSelectedTone: (t: string) => void;
   conversations: Conversation[];
@@ -61,6 +63,7 @@ interface AppContextType {
   setSelectedMessageId: (id: string | null) => void;
   profileData: ProfileData;
   setProfileData: (p: ProfileData) => void;
+  updateConversations: (updater: Conversation[] | ((prev: Conversation[]) => Conversation[])) => Promise<void>;
 }
 
 const defaultProfile: ProfileData = {
@@ -81,14 +84,30 @@ const defaultConversations: Conversation[] = [];
 
 const AppContext = createContext<AppContextType>({} as AppContextType);
 
+// Helper to quickly save conversations to Firestore
+import { setDoc } from "firebase/firestore";
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<{ id: string; url: string; name: string; file?: File }[]>([]);
   const [generatedRizz, setGeneratedRizz] = useState("");
+  const [ocrText, setOcrText] = useState("");
   const [selectedTone, setSelectedTone] = useState("Witty");
   const [conversations, setConversations] = useState<Conversation[]>(defaultConversations);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<ProfileData>(defaultProfile);
+
+  const updateConversations = async (updater: Conversation[] | ((prev: Conversation[]) => Conversation[])) => {
+    setConversations(prev => {
+      const newConvos = typeof updater === 'function' ? updater(prev) : updater;
+      if (auth.currentUser) {
+        setDoc(doc(db, "users", auth.currentUser.uid), {
+          conversations: newConvos
+        }, { merge: true }).catch(err => console.error("Failed to save conversations to Firebase", err));
+      }
+      return newConvos;
+    });
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -124,6 +143,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUploadedImages,
         generatedRizz,
         setGeneratedRizz,
+        ocrText,
+        setOcrText,
         selectedTone,
         setSelectedTone,
         conversations,
@@ -132,6 +153,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedMessageId,
         profileData,
         setProfileData,
+        updateConversations,
       }}
     >
       {children}

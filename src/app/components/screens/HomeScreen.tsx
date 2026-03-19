@@ -31,7 +31,7 @@ const DEMO_IMAGES = [
 
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { uploadedImages, setUploadedImages, setGeneratedRizz } = useApp();
+  const { uploadedImages, setUploadedImages, setGeneratedRizz, setOcrText } = useApp();
   const [isDragging, setIsDragging] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +91,8 @@ export const HomeScreen: React.FC = () => {
         if (img.file) formData.append('images', img.file);
       });
       
-      const response = await fetch((import.meta as any).env.VITE_API_URL || 'http://localhost:3000/rizzing', {
+      const apiUrl = (import.meta as any).env.VITE_API_URL ? `${(import.meta as any).env.VITE_API_URL}/rizzing` : 'http://localhost:5001/rizzing';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
       });
@@ -99,6 +100,7 @@ export const HomeScreen: React.FC = () => {
       
       if (data.line) {
         setGeneratedRizz(data.line);
+        if (data.ocrText) setOcrText(data.ocrText);
         navigate("/app/result");
       } else {
         alert(data.error || 'Failed to generate rizz');

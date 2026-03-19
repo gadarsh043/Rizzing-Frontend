@@ -9,6 +9,7 @@ import {
   Zap,
   RefreshCw,
   ChevronRight,
+  Edit2,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { useApp } from "../../context/AppContext";
@@ -76,30 +77,27 @@ function now() {
 export const ChatScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { conversations, setConversations } = useApp();
+  const { conversations, updateConversations, profileData } = useApp();
 
   const convo = conversations.find((c) => c.id === id);
 
-  /* local wingman timeline */
-  const [timeline, setTimeline] = useState<WingmanMessage[]>([]);
+  /* derived wingman timeline */
+  const timeline: WingmanMessage[] = convo ? convo.messages.map((m) => ({
+    id: m.id,
+    side: m.isUser ? "suggested" : "her",
+    text: m.text,
+    time: m.time,
+  })) : [];
+
   const [inputText, setInputText]     = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedId, setCopiedId]       = useState<string | null>(null);
   const [showHint, setShowHint]       = useState(true);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editAge, setEditAge] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef       = useRef<HTMLTextAreaElement>(null);
-
-  /* pre-populate from stored convo messages (only on first mount) */
-  useEffect(() => {
-    if (!convo) return;
-    const initial: WingmanMessage[] = convo.messages.map((m) => ({
-      id: m.id,
-      side: m.isUser ? "suggested" : "her",
-      text: m.text,
-      time: m.time,
-    }));
-    setTimeline(initial);
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -108,8 +106,8 @@ export const ChatScreen: React.FC = () => {
   /* mark unread → 0 on open */
   useEffect(() => {
     if (convo && convo.unreadCount > 0) {
-      setConversations(
-        conversations.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
+      updateConversations(prev =>
+        prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
       );
     }
   }, []);
@@ -131,14 +129,21 @@ export const ChatScreen: React.FC = () => {
 
     setShowHint(false);
 
-    // Add HER message to timeline
-    const herMsg: WingmanMessage = {
-      id: `her-${Date.now()}`,
-      side: "her",
-      text,
-      time: now(),
-    };
-    setTimeline((prev) => [...prev, herMsg]);
+    const timeStr = now();
+    const herMsgId = `her-${Date.now()}`;
+
+    // Add HER message to global conversation state
+    updateConversations(prev => prev.map(c => 
+      c.id === id ? {
+        ...c,
+        person: { ...c.person, lastSeen: "Just now" },
+        messages: [
+          ...c.messages,
+          { id: herMsgId, text, isUser: false, time: timeStr }
+        ]
+      } : c
+    ));
+    
     setInputText("");
     setIsGenerating(true);
 
@@ -150,13 +155,18 @@ export const ChatScreen: React.FC = () => {
       });
       const data = await res.json();
       
-      const suggestedMsg: WingmanMessage = {
-        id: `sug-${Date.now()}`,
-        side: "suggested",
-        text: data.reply || "Failed to generate reply",
-        time: now(),
-      };
-      setTimeline((prev) => [...prev, suggestedMsg]);
+      const suggestedStr = data.reply || "Failed to generate reply";
+      
+      // Add SUGGESTED message to global conversation state
+      updateConversations(prev => prev.map(c => 
+        c.id === id ? {
+          ...c,
+          messages: [
+            ...c.messages,
+            { id: `sug-${Date.now()}`, text: suggestedStr, isUser: true, time: now() }
+          ]
+        } : c
+      ));
     } catch(err) {
       console.error(err);
     } finally {
@@ -233,9 +243,51 @@ export const ChatScreen: React.FC = () => {
 
           {/* Name / status */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm" style={{ color: "white", fontWeight: 700 }}>
-              {person.name}, {person.age}
-            </p>
+            {isEditingProfile ? (
+              <div className="flex items-center gap-2 mb-0.5">
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="bg-transparent border-b border-white/20 text-sm font-bold outline-none w-24"
+                  style={{ color: "white" }}
+                  placeholder="Name"
+                />
+                <span className="text-white text-sm font-bold">,</span>
+                <input
+                  value={editAge}
+                  onChange={(e) => setEditAge(e.target.value)}
+                  className="bg-transparent border-b border-white/20 text-sm font-bold outline-none w-8 text-center"
+                  style={{ color: "white" }}
+                  placeholder="Age"
+                />
+                <button
+                  onClick={() => {
+                    updateConversations(prev => prev.map(c => 
+                      c.id === id ? { ...c, person: { ...c.person, name: editName || "Your Match", age: parseInt(editAge) || 24 } } : c
+                    ));
+                    setIsEditingProfile(false);
+                  }}
+                  className="ml-1 w-6 h-6 rounded-md flex items-center justify-center transition-all active:scale-90"
+                  style={{ background: "rgba(52,211,153,0.2)" }}
+                >
+                  <Check size={12} style={{ color: "#34d399" }} />
+                </button>
+              </div>
+            ) : (
+              <div 
+                className="flex items-center gap-1.5 group cursor-pointer w-fit" 
+                onClick={() => {
+                  setEditName(person.name);
+                  setEditAge(person.age?.toString() || "");
+                  setIsEditingProfile(true);
+                }}
+              >
+                <p className="text-sm" style={{ color: "white", fontWeight: 700 }}>
+                  {person.name}, {person.age}
+                </p>
+                <Edit2 size={11} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+              </div>
+            )}
             <p
               className="text-[11px]"
               style={{ color: person.isOnline ? "#34d399" : "rgba(255,255,255,0.3)" }}
@@ -244,19 +296,21 @@ export const ChatScreen: React.FC = () => {
             </p>
           </div>
 
-          {/* Match badge */}
-          <div
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] shrink-0"
-            style={{
-              background: "rgba(52,211,153,0.1)",
-              border: "1px solid rgba(52,211,153,0.2)",
-              color: "#34d399",
-              fontWeight: 700,
-            }}
-          >
-            <Zap size={11} />
-            {person.matchPercent}%
-          </div>
+          {/* Match badge – only show when user has filled their own profile */}
+          {profileData.name && (
+            <div
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] shrink-0"
+              style={{
+                background: "rgba(52,211,153,0.1)",
+                border: "1px solid rgba(52,211,153,0.2)",
+                color: "#34d399",
+                fontWeight: 700,
+              }}
+            >
+              <Zap size={11} />
+              {person.matchPercent}%
+            </div>
+          )}
         </div>
 
         {/* Wingman mode label */}

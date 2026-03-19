@@ -13,56 +13,44 @@ const tones = [
   { id: "Bold", emoji: "🔥", color: "#fb923c" },
 ];
 
-const rizzLines: Record<string, string[]> = {
-  Witty: [
-    "So you hike AND have good taste in coffee? I'm starting to think you're just a character written to break my algorithm 😅",
-    "Plot twist: I've been staring at your photo for 5 minutes trying to decide if I should open with a mountain pun or just say you're gorgeous. Decided on both.",
-    "Quick question — is that smile genuine or did you just find out guac is free? Either way, I'm here for it. 🥑",
-  ],
-  Cheesy: [
-    "Are you a campfire? Because you're hot and I want to s'more of you. 🔥",
-    "Do you have a map? I keep getting lost in your travel photos. 🗺️",
-    "Is your name WiFi? Because I'm really feeling a connection right now. 📶",
-  ],
-  Direct: [
-    "Your profile genuinely stopped my scroll. The Zion shot, the vinyl collection — I'd love to grab coffee and hear the stories behind all of it. Free this week?",
-    "I'll be honest — I swiped right in about 0.3 seconds. Your vibe is exactly my kind of energy. Want to chat?",
-    "Three things stood out: your taste in music, your sense of adventure, and that you actually wrote a real bio. Coffee?",
-  ],
-  Playful: [
-    "Wait, you hike AND collect vinyl records? I'm legally required to ask if you're a real person or just the universe's way of testing me 🎵🏔️",
-    "Okay I have two theories about you: 1) You're secretly a travel blogger. 2) You're the person who always orders the best thing on the menu. Which is it? 👀",
-    "Your energy screams 'spontaneous road trip at 2am' and honestly? I'm already packing. 🚗",
-  ],
-  Mysterious: [
-    "Something about your profile made me stop and just... stare for a while. Can't quite put my finger on it. Maybe you can help me figure it out over coffee?",
-    "I rarely message first, but here I am. Make of that what you will. 🌙",
-    "I have a feeling you have some really interesting stories. Am I wrong?",
-  ],
-  Bold: [
-    "I'll skip the small talk — you're exactly the kind of person I've been looking for. Let's actually meet up, not just chat forever. 🔥",
-    "Most people on here play it safe. I'm going to go ahead and say you're stunning, funny, and I'd love to take you out. Ball's in your court. 🎯",
-    "Okay, real talk? Your profile made me genuinely excited to open the app. That's rare. Let's not waste it — what are you doing this weekend?",
-  ],
-};
 
 export const ResultScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { selectedTone, setSelectedTone, uploadedImages, generatedRizz } = useApp();
+  const { selectedTone, setSelectedTone, uploadedImages, generatedRizz, ocrText, conversations, setConversations } = useApp();
   const [copied, setCopied] = useState(false);
-  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [currentLine, setCurrentLine] = useState(generatedRizz || "");
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [rating, setRating] = useState<"up" | "down" | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:5001';
 
-  const baseLines = rizzLines[selectedTone] || rizzLines.Witty;
-  const lines = generatedRizz ? [generatedRizz, ...baseLines] : baseLines;
-  const currentLine = lines[currentLineIndex];
-
-  useEffect(() => {
-    setCurrentLineIndex(0);
+  const fetchLineForTone = async (tone: string) => {
+    if (!ocrText) return; // No OCR text = no personalization possible
+    setIsRegenerating(true);
     setRating(null);
-  }, [selectedTone]);
+    try {
+      const res = await fetch(`${apiUrl}/generate-line`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ocrText, tone }),
+      });
+      const data = await res.json();
+      if (data.line) setCurrentLine(data.line);
+    } catch (err) {
+      console.error('Failed to generate tone line:', err);
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleToneChange = (tone: string) => {
+    setSelectedTone(tone);
+    fetchLineForTone(tone);
+  };
+
+  const handleRegenerate = () => {
+    fetchLineForTone(selectedTone);
+  };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(currentLine).catch(() => {});
@@ -72,15 +60,6 @@ export const ResultScreen: React.FC = () => {
       setCopied(false);
       setShowToast(false);
     }, 2000);
-  };
-
-  const handleRegenerate = () => {
-    setIsRegenerating(true);
-    setRating(null);
-    setTimeout(() => {
-      setCurrentLineIndex((prev) => (prev + 1) % lines.length);
-      setIsRegenerating(false);
-    }, 900);
   };
 
   const profileImg = uploadedImages[0]?.url || "https://images.unsplash.com/photo-1701884691134-5eb2211ba6fe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400";
@@ -165,7 +144,7 @@ export const ResultScreen: React.FC = () => {
             <motion.button
               key={tone.id}
               whileTap={{ scale: 0.92 }}
-              onClick={() => setSelectedTone(tone.id)}
+              onClick={() => handleToneChange(tone.id)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all duration-200"
               style={
                 selectedTone === tone.id
@@ -370,7 +349,31 @@ export const ResultScreen: React.FC = () => {
       {/* Go to Chat */}
       <motion.button
         whileTap={{ scale: 0.97 }}
-        onClick={() => navigate("/app/chat")}
+        onClick={() => {
+          const newId = `convo-${Date.now()}`;
+          const newConvo = {
+            id: newId,
+            person: {
+              name: "Your Match",
+              age: 24,
+              photo: profileImg,
+              bio: "",
+              interests: ["Photography", "Travel", "Coffee"],
+              isOnline: true,
+              lastSeen: "Just now",
+              matchPercent: 98,
+            },
+            messages: currentLine ? [{
+              id: `msg-${Date.now()}`,
+              text: currentLine,
+              isUser: true,
+              time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+            }] : [],
+            unreadCount: 0,
+          };
+          setConversations([newConvo, ...conversations]);
+          navigate(`/app/chat/${newId}`);
+        }}
         className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl transition-all duration-200"
         style={{
           background: "rgba(255,255,255,0.04)",
