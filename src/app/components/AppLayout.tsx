@@ -1,9 +1,16 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, Navigate } from "react-router";
 import { BottomNav } from "./BottomNav";
+import { useApp } from "../context/AppContext";
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
+  const { isAuthenticated } = useApp();
+
+  // Guard: redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   // Both the chat list and individual chat need full-height layout
   const isFullHeight =

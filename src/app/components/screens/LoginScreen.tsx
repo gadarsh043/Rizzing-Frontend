@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Sparkles, Zap, Heart, MessageCircle } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { auth, googleProvider } from "../../../lib/firebase";
 
 const floatingFeatures = [
@@ -17,6 +17,17 @@ export const LoginScreen: React.FC = () => {
   const navigate = useNavigate();
   const { setIsAuthenticated } = useApp();
   const [loading, setLoading] = useState(false);
+
+  // If user is already signed in, skip login
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        navigate("/app/home", { replace: true });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
