@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -61,6 +62,7 @@ const improvedAnswers: Record<number, string[]> = {
 };
 
 export const ProfileScreen: React.FC = () => {
+  const navigate = useNavigate();
   const { profileData, setProfileData } = useApp();
   const [improvingField, setImprovingField] = useState<string | null>(null);
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(0);
@@ -483,6 +485,28 @@ export const ProfileScreen: React.FC = () => {
         <Check size={18} style={{ color: "white" }} />
         <span style={{ color: "white", fontWeight: 700, fontSize: 16 }}>
           Save Profile
+        </span>
+      </motion.button>
+
+      {/* Log Out Button */}
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={async () => {
+          try {
+            await auth.signOut();
+            navigate("/");
+          } catch (error) {
+            console.error("Error signing out:", error);
+          }
+        }}
+        className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 mt-3 mb-2 transition-all"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+      >
+        <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: 16 }}>
+          Log Out
         </span>
       </motion.button>
     </div>
